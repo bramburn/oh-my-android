@@ -1,0 +1,21 @@
+[package]
+name = "android-panel"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "Android Panel — device list and adb server control for Windows"
+publish = false
+
+[lib]
+name = "android_panel_lib"
+crate-type = ["lib"]
+
+[build-dependencies]
+tauri-build = "2.7.4"
+
+[dependencies]
+tauri = "2.12.5"
+adbkit = { path = "../crates/adbkit" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
