@@ -100,10 +100,12 @@ they are the effective pins for the MVP.
 | `windows-sys` | **0.61.2** | crates.io API | 2026-11-15 | only the `Win32_System_JobObjects`, `Win32_Foundation` features |
 | `@sveltejs/vite-plugin-svelte` | **7.3.1** | npm registry | 2026-11-15 | must match `svelte` 5 / `vite` 8 |
 | `svelte-check` | **4.7.8** | npm registry | 2026-11-15 | the `npm run check` gate |
-| Rust toolchain | **1.89.0** `x86_64-pc-windows-msvc` | `rustup show` (local) | 2026-11-15 | MSVC link step verified with a scratch `cargo new` build |
+| `@fortawesome/free-solid-svg-icons` | **7.3.1** | npm registry | 2026-11-15 | icon source only, tree-shaken; **CC BY 4.0**, attribution in `NOTICE.md` (ADR-0008) |
+| Svelte 5 + Vite + TS **as installed** | svelte 5.57.3, vite 8.3.8, **typescript 5.9.3** | npm | 2026-11-15 | TS pinned to 5.9.3: `svelte-check@4.7.8` peers `^5 \|\| ^6`, so the documented 5.9.x fallback (§3) is **in force** |
+| Rust toolchain | **1.90.0** `x86_64-pc-windows-msvc` | `rustup show` (local) | 2026-11-15 | bumped from 1.89.0: `tauri` 2.12.5 declares `rust-version = 1.90`. MSVC link step verified with a scratch `cargo new` build |
 | WebView2 runtime | `157.0.4341.57` | registry `pv` on this machine | 2026-11-15 | the dev/build machine; target machines are still `UNVERIFIED` (spike S5) |
 | `adb` (local SDK) | `1.0.41` / `37.0.1-15733141` | `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe` | 2026-11-15 | not bundled (`DECISION`); used for the manual smoke test only |
 
-Version risk carried forward from §3: **TypeScript 7.0.2** is the native compiler. It built and type-checked
-this MVP, so the fallback to 5.9.x was **not** needed — but `svelte-check` compatibility remains the thing to
-re-check on the next TS bump.
+Version risk now **resolved against §3**: the TypeScript 7 fallback *is* in force. `npm install` with
+`typescript@7.0.2` fails with ERESOLVE because `svelte-check@4.7.8` peers `typescript@"^5.0.0 || ^6.0.0"`, so the
+MVP pins **5.9.3** (latest 5.x). Revisit when `svelte-check` supports TS 7, and record the bump here.

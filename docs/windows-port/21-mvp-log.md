@@ -31,6 +31,8 @@ the state is set to `error`.
 | **D8** | — | CI builds the frontend **before** the Rust steps | `tauri::generate_context!` embeds `frontendDist` at compile time, so `cargo clippy`/`test` fail without `dist/`. `dist/` stays git-ignored |
 | **D9** | monochrome | added a grayscale light-mode `prefers-color-scheme` block | explicit permission in the brief ("light-mode media query optional; if added, also grayscale") |
 | **D10** | `npm run tauri build` | produced 1 bundle, `targets: ["nsis"]` | per ADR-0007 |
+| **D11** | no icon dependency in the MVP brief | **added `@fortawesome/free-solid-svg-icons@7.3.1`** + local renderer | user request for Font Awesome icons. `@fortawesome/fontawesome-svg-core` (+24 KB gzip) and `@fortawesome/svelte-fontawesome` (Svelte 4 typings, undeclared `csstype` peer) were both rejected on measurement — ADR-0008. Cost: +4.5 KB raw / **+2.1 KB gzip** |
+| **D12** | — | fixed a silent icon-sizing bug found only by screenshot | `src/app.css` used Svelte's `:global(svg)`, which is invalid in a plain stylesheet: the rule was dropped, the SVGs rendered at 0×0 and every button looked icon-less while `svelte-check` stayed green |
 
 ### Threat/correctness notes from implementation
 
@@ -80,9 +82,9 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 
 | Metric | Value | How |
 |---|---|---|
-| NSIS installer | **1.33 MiB** (`Android Panel (working title)_0.1.0_x64-setup.exe`) | `npm run tauri build` |
+| NSIS installer | **1.33 MiB** (1.34 MiB with icons) (`Android Panel (working title)_0.1.0_x64-setup.exe`) | `npm run tauri build` |
 | `android-panel.exe` (release, LTO, strip) | **4.27 MB** | `ls -l target/release/` |
-| Frontend bundle | **38.38 kB JS (15.08 kB gzip)**, 2.60 kB CSS (1.01 kB gzip) | vite build output |
+| Frontend bundle | **42.88 kB JS (17.14 kB gzip)**, 3.08 kB CSS (1.13 kB gzip) | vite build output, after the Font Awesome icons (ADR-0008) |
 | Window handle after launch (release exe, warm caches) | **129 ms** | `Start-Process` + poll `MainWindowHandle` |
 | Cold start → interactive panel | **ESTIMATE < 500 ms**; not separately instrumented | — |
 | Orphans after `Stop-Process -Force` on the app | **0** `android-panel`, **0** `adb` | `Get-Process` after 3 s |
@@ -103,7 +105,7 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 
 - **Resolved 2026-11-15 (post-MVP):** the `Pixel_8` AVD was booted and the release build rendered it
   correctly — one row, `sdk gphone64 x86 64`, badge `READY`, serial `emulator-5554`
-  (`screenshots/mvp-device-list.png`). The `empty` state was observed before boot (no devices).
+  (`screenshots/mvp-device-icons.png`). The `empty` state was observed before boot (no devices).
 - Still unexercised with a real device: `unauthorized`/`offline` rendering, and every button press (see below).
 - The UI was **not clicked** by a human or a driver: `Refresh`/`Start`/`Stop` were verified by reading the
   code paths and by running the same adb commands from the shell, not by pressing the buttons. No WebDriver
@@ -128,7 +130,9 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 5. NSIS uninstall leaves the WebView2 user-data directory (`%LOCALAPPDATA%\dev.bramburn.androidpanel`)
    behind. Either delete it from an `installerHooks` uninstall step (it may contain cached UI state) or
    document it as intentional; decide when a settings file lands there.
-6. The UI still needs a real interactive pass: every button, both server actions, the confirm dialog, and the
+6. Icons were verified **visually** (screenshot), not by an assertion — the `:global()` bug in D12 proves a
+   green `svelte-check` says nothing about rendering. A snapshot/DOM assertion belongs in the UI test harness.
+7. The UI still needs a real interactive pass: every button, both server actions, the confirm dialog, and the
    `sdkMissing` path (rename the SDK env var to simulate).
 
 ## 8. Next milestone proposal

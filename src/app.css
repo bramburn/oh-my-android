@@ -83,10 +83,34 @@ footer {
   gap: 8px;
 }
 
+/* Icons: inline SVG from Font Awesome core, sized to the text and tinted by currentColor */
+
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.icon svg {
+  height: 1em;
+  width: 1em;
+  fill: currentColor;
+}
+
+.icon.lg svg {
+  height: 1.15em;
+  width: 1.15em;
+}
+
 /* Buttons: min 40px hit target, visible focus ring, no colour */
 
 button {
   font: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  justify-content: center;
   min-height: 40px;
   padding: 0 14px;
   color: var(--fg);
@@ -108,6 +132,10 @@ button:disabled {
   color: var(--muted);
   cursor: default;
   opacity: 0.7;
+}
+
+button.primary .icon svg {
+  opacity: 0.9;
 }
 
 button.primary {
@@ -150,6 +178,17 @@ button:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.device-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.device-name .icon {
+  color: var(--muted);
+}
+
 .device-serial {
   font-family: var(--mono);
   font-size: 12px;
@@ -157,7 +196,14 @@ button:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.badge .icon {
+  font-size: 9px;
+}
+
 .badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 11px;
   letter-spacing: 0.04em;
   text-transform: uppercase;

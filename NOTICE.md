@@ -39,3 +39,25 @@ software; keeping `LICENSE` intact satisfies that.
 The name "Oh My Android", the bundle identifier `se.royan.ohmyandroid`, the app icon, the Homebrew tap,
 and the Sparkle feed URL/EdDSA key in `project.yml` are the upstream author's identity and **must not be
 reused** by a fork that publishes to end users. See `docs/legal.md` for the full obligation list.
+
+## Third-party assets in the Windows application
+
+The Windows app (`src-tauri/`, `src/`, `crates/`) bundles the following third-party assets. These
+obligations apply to every distributed build (including the installer) and must not be removed.
+
+| Asset | Version (pinned) | Licence | Obligation |
+|---|---|---|---|
+| Font Awesome Free — **Solid icons** (`@fortawesome/free-solid-svg-icons`) | 7.3.1 | **CC BY 4.0** (icons) / MIT (code) | Attribution required — see below |
+| Font Awesome Free — code (`@fortawesome/fontawesome-svg-core`) | *not bundled* (removed, see ADR-0008) | MIT | n/a |
+| Tauri / `wry` / `tao` / `windows-sys` | see `Cargo.lock` | MIT or Apache-2.0 | reproduce notices in the installer |
+| Svelte, Vite, TypeScript | see `package-lock.json` | MIT | reproduce notices in the installer |
+
+### Font Awesome Free — required attribution
+
+> Font Awesome Free by Font Awesome — https://fontawesome.com
+> Icons: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
+> Code: MIT — https://opensource.org/licenses/MIT
+
+The glyphs used are: `arrows-rotate`, `play`, `stop`, `mobile-screen` (Solid). They are shipped as inline
+SVG path data in the frontend bundle; the licence does **not** permit removing this attribution when the app
+is redistributed. Changed files, if any, are limited to the four icon definitions being consumed unmodified.

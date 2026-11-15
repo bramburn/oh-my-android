@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import Icon from './lib/Icon.svelte';
+  import { faArrowsRotate, faMobileScreen, faPlay, faStop } from './lib/icons';
   import {
     adbStart,
     adbStop,
@@ -124,7 +126,10 @@
       {#each devices as device (device.serial)}
         <li class="device">
           <div class="device-top">
-            <span class="device-model">{device.model}</span>
+            <span class="device-name">
+              <Icon icon={faMobileScreen} />
+              <span class="device-model">{device.model}</span>
+            </span>
             <span class={stateClass(device.state)}>{stateLabel(device.state)}</span>
           </div>
           <div class="device-serial">{device.serial}</div>
@@ -142,7 +147,16 @@
 </main>
 
 <footer>
-  <button type="button" class="primary" onclick={refresh} disabled={busy}>Refresh</button>
-  <button type="button" onclick={() => runServer('start')} disabled={busy}>Start adb</button>
-  <button type="button" onclick={() => runServer('stop')} disabled={busy}>Stop adb</button>
+  <button type="button" class="primary" onclick={refresh} disabled={busy}>
+    <Icon icon={faArrowsRotate} />
+    Refresh
+  </button>
+  <button type="button" onclick={() => runServer('start')} disabled={busy}>
+    <Icon icon={faPlay} />
+    Start adb
+  </button>
+  <button type="button" onclick={() => runServer('stop')} disabled={busy}>
+    <Icon icon={faStop} />
+    Stop adb
+  </button>
 </footer>
