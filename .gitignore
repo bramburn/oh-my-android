@@ -88,3 +88,7 @@ tmp/
 
 # Cargo build output (the [Dd]ebug/[Rr]elease rules above only catch subdirectories)
 target/
+
+
+## repomix
+repomix-*.xml

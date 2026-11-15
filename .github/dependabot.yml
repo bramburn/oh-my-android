@@ -1,0 +1,36 @@
+version: 2
+
+# Pinned action SHAs, Cargo and npm all go stale silently. Grouped weekly updates keep one PR per
+# ecosystem instead of a stream of single-bump PRs — every one still needs the `windows` check and a
+# review, because main is a protected branch (docs/git-setup.md §3).
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      rust:
+        patterns: ['*']
+    ignore:
+      # tauri's minor versions move the MSRV; bump those deliberately (docs/windows-port/10-version-pin.md).
+      - dependency-name: tauri
+        update-types: [version-update:semver-minor]
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      js:
+        patterns: ['*']
