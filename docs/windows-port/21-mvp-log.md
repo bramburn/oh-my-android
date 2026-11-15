@@ -51,20 +51,40 @@ the state is set to `error`.
 - `window.confirm` is used for Stop. WebView2 renders its own modal; if a future WebView2 version suppresses
   it, replace with an in-app confirm dialog (`UNVERIFIED` — only exercised by recipe, not clicked).
 
-## 4. Persistence and migration rule (encoded now, used later)
+## 4. Persistence and migration rule
 
-- **There is no database and no migration in this MVP.** Upstream persists only preferences
-  (`docs/architecture/04-data-and-state.md`); this MVP persists **nothing** — the SDK path is re-located on
-  every command by `adbkit::sdk::locate`.
-- Any future persisted store is JSON with `"schemaVersion": 1`. Bump on a breaking shape change.
-- Migration scripts are committed as files but **executed only in the main repo checkout, only after the
-  merge, only with human approval**. Never in the worktree, never by the agent.
-- Merge-back (run by the human, not the agent):
+Superseded by O3 (iteration 2): there is now exactly one persisted file.
+
+### Config file
+
+| | |
+|---|---|
+| Path | `%APPDATA%\dev.bramburn.androidpanel\config.json` (Tauri `app_config_dir()`, i.e. `%APPDATA%\<identifier>`) |
+| Shape | `{ "schemaVersion": 1, "sdk": { "customRoot": null } }` |
+| Writer | **`src-tauri` only** (`src-tauri/src/config.rs`). The UI never writes files. |
+| Write mode | atomic: write `config.json.tmp` in the same directory, then `rename` over the target |
+| Missing file | defaults, no error, nothing created until the user picks a folder |
+| Corrupt file | copied to `config.json.bak`, defaults returned, `warning` surfaced in `SetupReport` → banner. Never crash, never silently overwrite. |
+| Unknown `schemaVersion` | treated as corrupt (`.bak` + defaults), never guessed |
+
+`customRoot` is an absolute SDK **root** (the folder that *contains* `platform-tools\`). It is validated on
+save *and* on load; a stale path fails validation and detection falls through to the env/default rules.
+
+### Migration policy (binding)
+
+- Current schema: **1**. `config::migrate` has exactly one arm (`1 => Ok`); anything else is an error the
+  loader treats as corrupt.
+- Any future bump **must** ship a numbered migration function + tests **in the same change**.
+- Migrations are **executed only in the main repository location after merge-back, only with human
+  approval**. Never in a worktree, never automatically, never by the agent.
+
+### Merge-back runbook (for the HUMAN — the agent must not execute it)
 
 ```powershell
 cd C:\dev\oh-my-android
-git merge --no-ff feat/win-mvp-tauri -m "merge: win MVP tauri scaffold"
-# migrations: none for this MVP. If a future merge adds one, run it HERE, now, not before.
+git merge --no-ff feat/win-mvp-tauri -m "merge: win MVP tauri scaffold + setup guidance"
+# schema is still 1: no migration step exists and none may be invented.
+# Any FUTURE merge that bumps schemaVersion: run its migration HERE, now, with approval.
 git worktree remove C:\dev\worktrees_tmp\oma-win-mvp
 git branch -d feat/win-mvp-tauri   # optional, after verification
 ```
