@@ -97,3 +97,59 @@ Explicitly **not** added in MVP: `tauri-plugin-store`, `tauri-plugin-shell`, `ta
 - `docs/windows-port/10-version-pin.md` — every version + its verification status.
 - Tauri v2 API shapes used here were checked against 2.12.5 docs; each is listed as VERIFIED in
   `docs/windows-port/21-mvp-log.md` §5.
+
+## Amendment 2 — setup guidance + minimal persistence (2026-11-15, accepted by the mission prompt)
+
+The MVP grows a second job: **when the SDK is missing or incomplete, guide the user — never install
+anything.** This is a scope change to ADR-0007, not a new architecture.
+
+### Decisions
+
+1. **Detect + guide, never install.** Detection is read-only: `Path::is_file` / `is_dir` on Studio, SDK,
+   `platform-toolsdb.exe`, `emulator.exe`, and a count of `*.ini` in the AVD folder. The *only* process
+   run for setup is `adb version` (a client-local command; it does **not** start the daemon — verified,
+   `21-mvp-log.md` §7). The app never downloads, never launches Studio/emulator, never writes env vars.
+   Rationale: installing software on a user's behalf is a different product (and a different licence and
+   security surface); the upstream app also only reads `AndroidSDK.swift:13-36`.
+2. **AVD detection reads the folder, it does not spawn the emulator.** `%USERPROFILE%\.androidvd\*.ini`
+   is exactly what `emulator -list-avds` enumerates; spawning the emulator to answer "is one configured?"
+   would violate decision 1 and cost seconds (`EmulatorLauncher.swift:8-16` launches it for real).
+3. **New plugins, both narrowly scoped:** `tauri-plugin-dialog` (folder picker, `dialog:allow-open` only)
+   and `tauri-plugin-opener` (`opener:allow-open-url` scoped to four exact `developer.android.com` URLs).
+   No `shell`, no `fs`, no `store`, no `http`. Rationale: the app must be able to *point at* the official
+   docs without embedding a browser or an HTTP client.
+4. **Icons: Font Awesome Free, bundled offline.** `@fortawesome/fontawesome-free@7.3.1` via npm; Vite
+   emits the woff2 into `dist/`. **No CDN**, no runtime network, CSP `font-src 'self'`. This supersedes the
+   definitions-only approach of ADR-0008 — see **ADR-0009** for the measurement and the reversal.
+5. **Minimal persistence exists now (override O3).** One key: `sdk.customRoot`. Config file
+   `%APPDATA%\dev.bramburn.androidpanel\config.json`:
+
+   ```json
+   { "schemaVersion": 1, "sdk": { "customRoot": null } }
+   ```
+
+   - Written **only** by `src-tauri` (Rust), atomically (temp file + `rename` in the same directory).
+   - Missing file = defaults, no error. Corrupt file = copy to `config.json.bak`, return defaults, and
+     surface a warning flag in the UI. Never crash, never silently overwrite.
+   - Schema is versioned from day one so a future field does not become a guess.
+
+### Migration policy (binding)
+
+Current schema is **1**, and `migrate()` has exactly one arm: `1 => Ok`. Any future bump ships a numbered
+migration function **with tests**. Migrations are **executed only in the main repository location after
+merge-back, and only with human approval** — never inside a worktree, never automatically on a branch that
+has not been reviewed. The runbook is in `docs/windows-port/21-mvp-log.md` §4.
+
+### Dependency table (one line each)
+
+| Dependency | Why it is allowed |
+|---|---|
+| `tauri`, `@tauri-apps/api` | the chosen framework (ADR-0001) |
+| `tauri-plugin-dialog` | native folder picker; no web-file-system workaround, no `shell` |
+| `tauri-plugin-opener` | opens the official docs in the user's browser; scoped to 4 exact URLs |
+| `@fortawesome/fontawesome-free` | offline monochrome icons; attribution in `NOTICE.md` (ADR-0009) |
+| `tokio` (`process`, `time`) | async child processes with timeouts |
+| `serde`, `serde_json` | IPC + the versioned config file |
+| `thiserror` | `AdbError` without hand-written `Display` |
+| `windows-sys` | Job Object (`KILL_ON_JOB_CLOSE`) and `CREATE_NO_WINDOW` |
+| `svelte`, `vite`, `typescript`, `svelte-check` | UI build + type gate |

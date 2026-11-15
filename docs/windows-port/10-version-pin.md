@@ -109,3 +109,28 @@ they are the effective pins for the MVP.
 Version risk now **resolved against §3**: the TypeScript 7 fallback *is* in force. `npm install` with
 `typescript@7.0.2` fails with ERESOLVE because `svelte-check@4.7.8` peers `typescript@"^5.0.0 || ^6.0.0"`, so the
 MVP pins **5.9.3** (latest 5.x). Revisit when `svelte-check` supports TS 7, and record the bump here.
+
+## 7. MVP iteration 2 — setup guidance pins (executed)
+
+Resolved 2026-11-15 from the registries, not recalled. Everything below is in a committed lockfile
+(`Cargo.lock`, `package-lock.json`); `.gitignore` deliberately keeps both.
+
+| Component | Pinned | Source | Verified | Notes |
+|---|---|---|---|---|
+| `tauri` | **2.12.5** | crates.io API | 2026-11-15 | unchanged; MSRV 1.90 |
+| `tauri-plugin-dialog` | **2.8.4** | crates.io API | 2026-11-15 | native **folder picker** only (`dialog:allow-open`) |
+| `tauri-plugin-opener` | **2.7.3** | crates.io API | 2026-11-15 | opens the four official https links in the system browser |
+| `tokio` | **1.54.1** | crates.io API | 2026-11-15 | `process` + `time` features only |
+| `serde` / `serde_json` | **1.0.229** / **1.0.154** | crates.io API | 2026-11-15 | IPC + config file |
+| `thiserror` | **2.0.21** | crates.io API | 2026-11-15 | `AdbError` |
+| `windows-sys` | **0.61.2** | crates.io API | 2026-11-15 | Job Objects only |
+| `@tauri-apps/cli` | **2.12.4** | npm registry | 2026-11-15 | matches the `tauri` crate line |
+| `@tauri-apps/api` | **2.12.4** | npm registry | 2026-11-15 | `invoke`, `Channel` not used |
+| `@fortawesome/fontawesome-free` | **7.3.1** | npm registry | 2026-11-15 | **bundled offline**, no CDN; CC BY 4.0 icons / OFL 1.1 fonts / MIT code (ADR-0009) |
+| `svelte` / `vite` / `@sveltejs/vite-plugin-svelte` | **5.57.3** / **8.3.8** / **7.3.1** | npm registry | 2026-11-15 | unchanged |
+| `typescript` | **5.9.3** | npm registry | 2026-11-15 | TS 7.0.2 is blocked by `svelte-check`'s peer range — see §6 |
+| Rust toolchain | **1.90.0** `x86_64-pc-windows-msvc` | `rustup` | 2026-11-15 | tauri 2.12 declares MSRV 1.90 |
+| Node | **24.11.0** (LTS) | `.nvmrc` | 2026-11-15 | what CI installs |
+
+`REGISTRY-QUERY` = `https://registry.npmjs.org/<pkg>` / `https://crates.io/api/v1/crates/<crate>` on
+2026-11-15. Re-query before any bump; do not bump by memory.

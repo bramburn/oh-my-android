@@ -4,8 +4,14 @@ Living record for the `feat/win-mvp-tauri` branch. Newest section last.
 
 ## 1. Scope
 
-Three commands — `list_devices`, `adb_start`, `adb_stop` — a monochrome device list, and an NSIS
-installer. Everything else is out (`docs/adr/ADR-0007-win-mvp-scaffold.md`).
+**Iteration 1:** three commands — `list_devices`, `adb_start`, `adb_stop` — a monochrome device list, and an
+NSIS installer.
+
+**Iteration 2 (this one):** Setup guidance. Five commands — `setup_report`, `choose_sdk_folder`,
+`list_devices`, `adb_start`, `adb_stop`. When the SDK is missing/incomplete the app shows a read-only
+checklist (Studio, SDK/platform-tools, `adb` version, emulator, AVDs) with official links, a native
+"Choose SDK folder…" picker and "Re-check". It **never installs anything**. Everything else is out
+(`docs/adr/ADR-0007-win-mvp-scaffold.md` + Amendment 2).
 
 ## 2. Overrides of `AGENTS.md`
 
@@ -13,6 +19,7 @@ installer. Everything else is out (`docs/adr/ADR-0007-win-mvp-scaffold.md`).
 |---|---|---|
 | **O1** | Device list updates on explicit **Refresh** only. Invariant #4 (event-driven hotplug, `Sources/Core/Android/DeviceTracker.swift:96-118`) is **deferred**. | Active for this MVP |
 | **O2** | **Start/Stop targets the adb server** (`adb start-server` / `adb kill-server`), not emulators or devices. `kill-server` is on the human-approval list (`AGENTS.md` §7); the button + `confirm()` dialog *is* the approval. Never automatic, never in a test. | Active for this MVP |
+| **O3** | **Minimal persistence introduced**: exactly one key, `sdk.customRoot`, in a versioned JSON config (`schemaVersion: 1`). No other state is written. | Active from iteration 2 |
 
 Consequence of O1 that matters: an error must not leave stale rows on screen — the list is cleared before
 the state is set to `error`.
