@@ -1,0 +1,43 @@
+# Normalize text to LF in the index and the working tree.
+# Rationale: the upstream repo is macOS-only and every tracked text file is already LF
+# (`git ls-files --eol` shows `w/lf` for all 98 text files at baseline 9f37391), so this
+# attribute changes no bytes today. It only prevents CRLF leaking in from Windows editors.
+* text=auto eol=lf
+
+# Windows-native script types must keep CRLF to be runnable by cmd.exe/PowerShell.
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+*.ps1  text eol=crlf
+*.psm1 text eol=crlf
+*.sln  text eol=crlf
+*.vcxproj text eol=crlf
+
+# Shell scripts that must keep LF even if edited on Windows.
+*.sh   text eol=lf
+*.zsh  text eol=lf
+
+# Binaries: never diff, never convert.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.icns  binary
+*.jar   binary
+*.exe   binary
+*.dll   binary
+*.pdb   binary
+*.so    binary
+*.dylib binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.otf   binary
+*.mcpb  binary
+*.zip   binary
+
+# Xcode: generated project files are not committed (see .gitignore).
+*.xcodeproj/project.pbxproj text
+
+# Record the upstream lineage for GitHub's language stats and review tools.
+docs/upstream/** linguist-vendored

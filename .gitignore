@@ -7,3 +7,79 @@ DerivedData/
 build/
 dist/
 .DS_Store
+
+# --- Fork additions below this line (see docs/git-setup.md) ---
+
+# macOS editor / tooling noise
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+.swiftpm/
+.build/
+Packages/
+*.dSYM
+*.dSYM.zip
+*.ipa
+*.app
+
+# Windows tooling noise (target stack not chosen yet; these must never block a decision)
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.VC.db
+*.VC.VC.opendb
+ipch/
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+ARM64/
+*.snupkg
+*.nupkg
+*.msix
+*.msi
+*.appx
+*.appxbundle
+TestResults/
+[Tt]est[Rr]esult*/
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+
+# Node / web-tooling noise (only if a web-based UI is ever adopted)
+node_modules/
+.pnpm-store/
+.yarn/cache/
+yarn-error.log
+*.tsbuildinfo
+.vite/
+.turbo/
+
+# Python (Scripts/test-mcp.py is committed; scratch venvs are not)
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+
+# Local agent/tool scratch space
+.pi/
+tmp/
+*.log
+
+# NOTE: lockfiles are deliberately NOT ignored (package-lock.json, Cargo.lock,
+# packages.lock.json, *.lock, Directory.Packages.props, global.json). Committing them
+# is required for reproducible builds, which the fork's ADR process depends on.

@@ -1,0 +1,24 @@
+# Observed upstream style: 1 tab-equivalent = 4 spaces, LF, no trailing whitespace.
+# This file does not reformat anything; it only stops editors from introducing churn.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.{yml,yaml,json,md}]
+indent_size = 2
+
+[*.swift]
+indent_size = 4
+
+[*.{bat,cmd,ps1,sln,vcxproj}]
+end_of_line = crlf
+
+[*.md]
+# Markdown tables in docs/ rely on trailing pipes, not trailing spaces.
+trim_trailing_whitespace = false
