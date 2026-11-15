@@ -41,3 +41,5 @@
 
 # Record the upstream lineage for GitHub's language stats and review tools.
 docs/upstream/** linguist-vendored
+# Test fixtures must keep their exact bytes: some exist specifically to carry CRLF or invalid UTF-8.
+crates/adbkit/tests/fixtures/** -text

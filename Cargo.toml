@@ -1,0 +1,25 @@
+[workspace]
+resolver = "2"
+members = ["crates/adbkit"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.89"
+
+[workspace.dependencies]
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "process", "time", "macros", "io-util"] }
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.145"
+thiserror = "2.0.21"
+windows-sys = { version = "0.61.2", features = [
+    "Win32_Foundation",
+    "Win32_System_JobObjects",
+    "Win32_System_Threading",
+] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
