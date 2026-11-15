@@ -17,7 +17,11 @@ This repository is a **modified fork**.
 
 ## What this fork changes
 
-At the fork point, the changes are **documentation and repository hygiene only**:
+**This fork is Windows-only.** It re-implements the product as a Tauri v2 desktop app under `crates/`,
+`src-tauri/` and `src/`; the upstream macOS sources in `Sources/` are kept verbatim, unmodified, and are not
+built or shipped by this fork. The upstream MCP server is not ported.
+
+At the fork point, the changes were **documentation and repository hygiene only**:
 
 - `docs/` gains an engineering documentation set (inventory, coverage, assumptions, open questions,
   architecture deep dive, feature matrix) and the original upstream docs under `docs/upstream/`.
@@ -27,8 +31,10 @@ At the fork point, the changes are **documentation and repository hygiene only**
   reorganised (`origin` = this fork, `upstream` = the original).
 - `NOTICE.md`, `docs/legal.md`, `docs/git-setup.md`, `docs/CONTRIBUTING-fork.md` are added.
 
-**No application source file is modified in the fork's documentation phase.** Any future change to
-`Sources/**` will be recorded here and in the commit history.
+**No upstream application source file is modified by this fork.** `Sources/`, `project.yml`, `Scripts/`,
+`.github/workflows/build.yml` and `LICENSE` are byte-identical to the fork point; all new application code
+lives in new directories (`crates/`, `src-tauri/`, `src/`) so that the reference implementation stays
+diffable against upstream. Any change to `Sources/**` would be recorded here and in the commit history.
 
 ## Alternative dates and copyright
 
