@@ -5,11 +5,15 @@
 //! client is orphaned. A job object with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` makes the kernel do the
 //! cleanup instead.
 //!
-//! What is deliberately **not** in the job: the adb **server daemon**. `adb start-server` starts a
-//! long-lived `adb.exe` that listens on tcp:5037. It is spawned by adb itself (as a detached grandchild
-//! of the client we start), it is shared with every other tool on the machine, and upstream also leaves
-//! it running (`docs/architecture/05-concurrency-and-lifecycle.md`). Killing it on app exit would break
-//! other tools and any emulator session, so it must outlive us.
+//! **Measured consequence (MVP, 2026-11-15):** the adb *server daemon* also dies with the app.
+//! Job membership is inherited by children, so the daemon that `adb devices` lazily spawns is inside our
+//! job even though adb created it, not us. Verified: kill the app while the server is running →
+//! `Get-Process adb` = 0 and tcp:5037 is closed. Upstream leaves the daemon running
+//! (`docs/architecture/05-concurrency-and-lifecycle.md`); this MVP deliberately prefers "nothing outlives
+//! the app" (root `AGENTS.md` §6.9) over daemon sharing, and the next adb call restarts it. Revisit when
+//! long-lived streams (logcat, `adb shell`) arrive: they need a per-command policy where the
+//! daemon-spawning command breaks away from the job. Recorded in `docs/windows-port/21-mvp-log.md` §3 D5.
+//!
 
 use std::sync::OnceLock;
 
