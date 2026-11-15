@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "MVP: the single main window may use core IPC and events. No plugin permissions are granted, and app-defined commands are authorized in Rust.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

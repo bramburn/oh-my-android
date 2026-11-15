@@ -85,3 +85,6 @@ tmp/
 # is required for reproducible builds, which the fork's ADR process depends on.
 # Local research scratch (spike dumps, doc fetches)
 .scratch/
+
+# Cargo build output (the [Dd]ebug/[Rr]elease rules above only catch subdirectories)
+target/

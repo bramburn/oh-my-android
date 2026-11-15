@@ -1,0 +1,15 @@
+[package]
+name = "adbkit"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "The only crate in this app that spawns adb. Parsers, runner, SDK locator, job object."
+
+[dependencies]
+serde = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+windows-sys = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

@@ -13,7 +13,7 @@ Read this file first. It is the entry point for any AI agent working in this rep
 | Upstream commit | `9f37391` (tag `v0.4.6`), MIT © 2026 Royan AB |
 | Fork goal | Re-implement the product as a **Windows-only GUI**, in **Tauri v2**, with a proper installer |
 | Upstream stack | Swift 6, SwiftUI/AppKit, macOS 26+, 6 605 LOC — **not** Electron/Tauri/.NET |
-| Current phase | Documentation + planning (Gate 3). **No Windows application code exists yet.** |
+| Current phase | **MVP scaffold exists** on `feat/win-mvp-tauri` (worktree `C:\dev\worktrees_tmp\oma-win-mvp`): device list + adb start/stop, NSIS installer. Not merged, not pushed. Next: hotplug + 8-state panel. |
 | Scope decisions (approved) | App only — **no MCP server** on Windows · macOS CI is **kept** · `Sources/**` is **read-only reference** · installer required (not portable) · no MCP registry metadata |
 | Contested decision | Mirroring: Gate 1 said no, Gate 3 made it the central risk → treated as **spike-gated M3**, `docs/adr/ADR-0002-mirroring.md` (Proposed). M0–M2 do not depend on it |
 | Pinned stack | `tauri` 2.12.5 · `@tauri-apps/cli` 2.12.4 · Svelte 5.57.3 · Vite 8.3.8 · Tailwind 4.3.5 · Node 24.11.0 · Rust 1.89.0 — full table + API-verification status in `docs/windows-port/10-version-pin.md` |
@@ -96,14 +96,19 @@ Upstream build (macOS only, kept working — do not break it):
 | `Scripts/test-mcp.py "<app>/Contents/MacOS/ohmyandroid-mcp"` | `UNVERIFIED` (source: `.github/workflows/build.yml:31`) |
 | `adb version` | **fails here** — `adb` is not on PATH on the dev machine; do not assume a device is reachable |
 
-Windows (planned, **not yet runnable** — see `docs/windows-port/04-feature-parity-plan.md` M0):
+Windows (run from the repo root of a checkout of `feat/win-mvp-tauri`; toolchain 1.90.0):
 
 | Command | Status |
 |---|---|
-| `npm ci` then `npm run tauri dev` | `UNVERIFIED` (nothing scaffolded) |
-| `npm run tauri build` | `UNVERIFIED` |
-| `cargo test --workspace` / `cargo clippy --workspace --all-targets -- -D warnings` | `UNVERIFIED` |
-| `npm run check && npm run test && npm run check:bindings` | `UNVERIFIED` |
+| `npm install` | **VERIFIED** 2026-11-15 (use `npm ci` in CI; `npm ci` itself `UNVERIFIED` locally) |
+| `npm run check` (svelte-check) | **VERIFIED** — 0 errors, 0 warnings |
+| `npm run build` (vite) | **VERIFIED** — 38.4 kB JS / 15.1 kB gzip |
+| `cargo fmt --all --check` | **VERIFIED** |
+| `cargo clippy --workspace --all-targets -- -D warnings` | **VERIFIED** |
+| `cargo test --workspace` | **VERIFIED** — 28 tests pass (no device, no real adb) |
+| `npm run tauri build` | **VERIFIED** — NSIS installer, 1.33 MiB |
+| `npm run tauri dev` | `UNVERIFIED` (not run; would open a dev window) |
+| `npm run test` / `npm run check:bindings` | not implemented yet (no vitest, no generated bindings in the MVP) |
 
 Placeholder names to confirm before M1: product `ADB Panel`, id `io.github.bramburn.adbpanel`
 (`docs/windows-port/00-target-and-constraints.md` §4).

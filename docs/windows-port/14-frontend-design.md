@@ -109,8 +109,8 @@ where a rewrite usually regresses:
 
 | Asset | Budget |
 |---|---|
-| JS (gzip) | ≤180 KB initial route |
-| CSS (gzip) | ≤25 KB |
+| JS (gzip) | ≤180 KB initial route — **MVP measured 17.1 KB** |
+| CSS (gzip) | ≤25 KB — **MVP measured 1.1 KB** |
 | Fonts | none bundled in v1 (system fonts) |
 | Icons | inline SVG sprite ≤15 KB |
 | Total frontend in installer | ≤2 MB |

@@ -1,0 +1,53 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Android Panel (working title)",
+  "version": "0.1.0",
+  "identifier": "dev.bramburn.androidpanel",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Android Panel",
+        "width": 420,
+        "height": 640,
+        "minWidth": 360,
+        "minHeight": 420,
+        "resizable": true,
+        "decorations": true,
+        "center": true,
+        "visible": true,
+        "devtools": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'",
+      "capabilities": ["default"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico"],
+    "shortDescription": "Android device list and adb server control",
+    "longDescription": "A Windows-only Android test panel. Lists connected devices and controls the local adb server. Bring your own Android SDK.",
+    "category": "DeveloperTool",
+    "copyright": "MIT. See LICENSE and NOTICE.md.",
+    "resources": [],
+    "windows": {
+      "webviewInstallMode": { "type": "downloadBootstrapper", "silent": true },
+      "allowDowngrades": false,
+      "nsis": {
+        "installMode": "currentUser",
+        "compression": "lzma",
+        "languages": ["English"]
+      }
+    }
+  }
+}

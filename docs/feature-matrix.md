@@ -13,8 +13,8 @@ Tier meaning: **P0** = without it the Windows app is not a usable equivalent of 
 | Feature | User value | Source impl | Cx | Win feasibility | Deps | Tier | Notes |
 |---|---|---|---|---|---|---|---|
 | Find the Android SDK + `adb` | nothing works without it | `Sources/Core/Android/AndroidSDK.swift:13-36` | S | High | — | P0 | Windows search order is different; keep "choose folder" + persist |
-| Start / restart the adb server | fixes stuck devices | `Sources/Core/Android/ADBClient.swift:43-47`, `:82-86` | S | High | job objects, `CREATE_NO_WINDOW` | P0 | Spawn detached with no inherited pipes/handles |
-| List devices (state, model, boot, AVD name) | the core list | `Sources/Core/Android/ADBClient.swift:49-121` | M | High | — | P0 | Parse `devices -l`; batch the 2 extra reads |
+| Start / restart the adb server | fixes stuck devices | `Sources/Core/Android/ADBClient.swift:43-47`, `:82-86` | S | High | job objects, `CREATE_NO_WINDOW` | P0 | **Implemented (MVP)**: `adb_start`/`adb_stop`, all stdio null, behind a confirm dialog (`crates/adbkit/src/runner.rs`) |
+| List devices (state, model, boot, AVD name) | the core list | `Sources/Core/Android/ADBClient.swift:49-121` | M | High | — | P0 | **Implemented (MVP, refresh-only)** for serial/model/state; boot + AVD name not yet (`crates/adbkit/src/parser.rs`) |
 | Live hotplug updates | no refresh button needed | `Sources/Core/Android/DeviceTracker.swift:96-118` | M | Medium | winsock | P0 | Raw `host:track-devices`; fallback = 2 s polling |
 | Remember last device | convenience | `Sources/State/DeviceStore.swift:13-16`, `:57-63` | S | High | — | P0 | |
 | Boot/recovery polling | panel works when boot finishes | `Sources/State/DeviceStore.swift:75-90` | S | High | — | P0 | 4 s while not ready |
