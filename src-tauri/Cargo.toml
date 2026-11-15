@@ -11,10 +11,10 @@ name = "android_panel_lib"
 crate-type = ["lib"]
 
 [build-dependencies]
-tauri-build = "2.7.4"
+tauri-build = { version = "2.7.4", features = [] }
 
 [dependencies]
-tauri = "2.12.5"
+tauri = { version = "2.12.5", features = [] }
 adbkit = { path = "../crates/adbkit" }
 serde = { workspace = true }
 serde_json = { workspace = true }

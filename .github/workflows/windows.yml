@@ -1,0 +1,93 @@
+name: Windows
+
+# Added alongside build.yml (the untouched macOS workflow). Windows app only: crates/, src-tauri/, src/.
+on:
+  push:
+    branches: [main, feat/windows-gui-port, feat/win-mvp-tauri]
+    paths: ['Cargo.toml', 'Cargo.lock', 'crates/**', 'src-tauri/**', 'src/**', 'package.json', 'package-lock.json', '.github/workflows/windows.yml']
+  pull_request:
+    paths: ['Cargo.toml', 'Cargo.lock', 'crates/**', 'src-tauri/**', 'src/**', 'package.json', 'package-lock.json', '.github/workflows/windows.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      CARGO_TERM_COLOR: always
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # Rust comes from rust-toolchain.toml; the action installs exactly that channel.
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+
+      - name: Cache cargo
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', 'rust-toolchain.toml') }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # `tauri::generate_context!` embeds frontendDist at compile time, so the UI is built first.
+      - name: Build frontend
+        run: npm run build
+
+      - name: Formatting
+        run: cargo fmt --all --check
+
+      - name: Clippy (warnings are errors)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace
+
+      - name: Guard - adb is spawned only in crates/adbkit
+        shell: pwsh
+        run: |
+          $hits = Select-String -Path (Get-ChildItem -Recurse -Include *.rs src-tauri, src | ForEach-Object FullName) `
+                    -Pattern 'Command::new' -ErrorAction SilentlyContinue
+          if ($hits) {
+            $hits | ForEach-Object { Write-Host "::error file=$($_.Path),line=$($_.LineNumber)::$($_.Line.Trim())" }
+            throw "Process spawning outside crates/adbkit is forbidden (AGENTS.md invariant #1)."
+          }
+          Write-Host "No Command::new outside crates/adbkit."
+
+      - name: Guard - no Tauri v1 APIs
+        shell: pwsh
+        run: |
+          $patterns = 'tauri::api::', 'allowlist', '"allowlist"'
+          $files = Get-ChildItem -Recurse -Include *.rs, *.json src-tauri, src, crates |
+                   Where-Object { $_.FullName -notmatch '\\target\\|\\gen\\' }
+          $bad = $files | Select-String -Pattern $patterns -ErrorAction SilentlyContinue
+          if ($bad) { $bad | ForEach-Object { Write-Host "::error::$($_.Path):$($_.LineNumber) $($_.Line.Trim())" }; throw "Tauri v1 API detected." }
+          Write-Host "No Tauri v1 APIs."
+
+      - name: Package (NSIS installer)
+        run: npm run tauri build
+
+      - name: Upload installer
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: android-panel-nsis-${{ github.sha }}
+          path: target/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+          retention-days: 14
