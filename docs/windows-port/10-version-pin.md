@@ -90,3 +90,20 @@ browser behaviour).
 
 A version bump is a PR that touches exactly: the lockfile, the relevant `Cargo.toml`/`package.json`, and
 this table. Bumping `tauri`/`wry`/`tao` additionally requires re-running spikes S1 and S3.
+## 6. MVP scaffold pins (executed)
+
+Versions resolved while building `feat/win-mvp-tauri`. Unlike §1 these were **used to build and test**, so
+they are the effective pins for the MVP.
+
+| Component | Pinned | Source | Verified | Notes |
+|---|---|---|---|---|
+| `windows-sys` | **0.61.2** | crates.io API | 2026-11-15 | only the `Win32_System_JobObjects`, `Win32_Foundation` features |
+| `@sveltejs/vite-plugin-svelte` | **7.3.1** | npm registry | 2026-11-15 | must match `svelte` 5 / `vite` 8 |
+| `svelte-check` | **4.7.8** | npm registry | 2026-11-15 | the `npm run check` gate |
+| Rust toolchain | **1.89.0** `x86_64-pc-windows-msvc` | `rustup show` (local) | 2026-11-15 | MSVC link step verified with a scratch `cargo new` build |
+| WebView2 runtime | `157.0.4341.57` | registry `pv` on this machine | 2026-11-15 | the dev/build machine; target machines are still `UNVERIFIED` (spike S5) |
+| `adb` (local SDK) | `1.0.41` / `37.0.1-15733141` | `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe` | 2026-11-15 | not bundled (`DECISION`); used for the manual smoke test only |
+
+Version risk carried forward from §3: **TypeScript 7.0.2** is the native compiler. It built and type-checked
+this MVP, so the fallback to 5.9.x was **not** needed — but `svelte-check` compatibility remains the thing to
+re-check on the next TS bump.
