@@ -59,6 +59,7 @@ fork point stays provable.
 | Issues | on, with templates | bug reports need structured data (adb version, `adb devices -l`) |
 | Wiki / Projects | off | documentation lives in `docs/`, reviewed like code |
 | License detection | MIT (from `LICENSE`) | unchanged upstream text |
+| Dependency updates | Dependabot, weekly, grouped per ecosystem | pinned SHAs and crates go stale silently; every bump still needs `windows` + review |
 
 ### Branch protection on `main`
 
