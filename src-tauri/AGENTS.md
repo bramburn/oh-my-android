@@ -10,10 +10,14 @@ first.
 2. **No `Command::new` here.** CI fails the build if it appears outside `crates/adbkit` (root invariant #1).
 3. **Tauri v2 only.** `tauri::api::*`, `allowlist`, or a `tauri.conf.json` with a top-level `tauri` key are
    bugs. Config is validated against `https://schema.tauri.app/config/2`.
-4. **No new plugin and no new dependency without an ADR.** MVP has none, deliberately: no `shell`, no `fs`,
-   no `store`, no `dialog`. Native dialogs come later with a capability scope decision.
-5. **Capabilities are least privilege.** `capabilities/default.json` grants `core:default` to `main` only.
-   Remember: capabilities gate *plugin* commands; app commands must validate their own preconditions in Rust.
+4. **No new plugin and no new dependency without an ADR.** Exactly two plugins are in force and no more
+ may be added silently: `dialog` (folder picker) and `opener` (documentation links). Still absent on
+ purpose: `shell`, `fs`, `store`, `http`.
+5. **Capabilities are least privilege.** `capabilities/default.json` grants `core:default` to `main`, plus
+ `dialog:allow-open` and an `opener:allow-open-url` scope listing the four documentation URLs. Remember:
+ capabilities gate *plugin* commands only; app commands must validate their own preconditions in Rust.
+ Both plugins are in fact invoked **from Rust** (not permission-gated), so the grants keep any future
+ webview caller inside the same narrow scope.
 6. **Errors cross the boundary as `AppError { code, message }`** (`src/error.rs`). `message` is a sentence for
    a human; never include a stack trace, an absolute path, or a device serial's full value.
 7. **Never panic on device data.** A bad parse is `ADB_FAILED`, not a crash. `expect` is allowed only for
@@ -29,11 +33,12 @@ first.
 |---|---|
 | `src/lib.rs` | builder wiring, `invoke_handler`, managed state |
 | `src/main.rs` | bin entry, `windows_subsystem = "windows"` in release |
-| `src/state.rs` | `AppState` — the cached `adb.exe` path (re-located when empty) |
-| `src/commands.rs` | `list_devices`, `adb_start`, `adb_stop` |
+| `src/state.rs` | `AppState` — config behind a mutex, plus the cached `adb.exe` path (cleared on any config change) |
+| `src/config.rs` | the versioned config file: atomic write, `.bak` on corruption, `schemaVersion` gate |
+| `src/commands.rs` | `setup_report`, `choose_sdk_folder`, `list_devices`, `adb_start`, `adb_stop`, `open_docs` |
 | `src/error.rs` | `AppError` + the `adbkit::AdbError` mapping |
 | `tauri.conf.json` | window, CSP, bundle, NSIS per-user |
-| `capabilities/default.json` | the entire permission grant |
+| `capabilities/default.json` | the entire permission grant (dialog + scoped opener) |
 | `icons/` | generated monochrome placeholders — never upstream assets (`docs/legal.md` §1) |
 
 ## Adding a command

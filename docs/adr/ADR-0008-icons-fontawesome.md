@@ -1,6 +1,7 @@
 # ADR-0008 — Font Awesome Free for UI icons
 
-- **Status:** Accepted (2026-11-15)
+- **Status:** **Superseded by ADR-0009** (2026-11-15) — kept for the record; the icon-definitions approach
+  was replaced by the bundled icon font when the icon count grew from 4 to 13
 - **Supersedes:** nothing
 - **Related:** `docs/windows-port/14-frontend-design.md` (monochrome design), `src/AGENTS.md` §9 (no new
   runtime dependency without an ADR)

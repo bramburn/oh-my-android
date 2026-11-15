@@ -1,7 +1,29 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "MVP: the single main window may use core IPC and events. No plugin permissions are granted, and app-defined commands are authorized in Rust.",
-  "windows": ["main"],
-  "permissions": ["core:default"]
+  "description": "Least privilege: core IPC/events for the main window; the folder picker may only open a folder dialog; the opener may only launch the four official Android documentation URLs. Both plugins are actually invoked from Rust, which is not permission-gated - the grants are here so any future webview caller inherits the same narrow scope.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "dialog:allow-open",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://developer.android.com/studio"
+        },
+        {
+          "url": "https://developer.android.com/tools/adb"
+        },
+        {
+          "url": "https://developer.android.com/studio/run/managing-avds"
+        },
+        {
+          "url": "https://developer.android.com/studio/debug/dev-options"
+        }
+      ]
+    }
+  ]
 }

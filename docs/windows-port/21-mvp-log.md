@@ -19,7 +19,7 @@ checklist (Studio, SDK/platform-tools, `adb` version, emulator, AVDs) with offic
 |---|---|---|
 | **O1** | Device list updates on explicit **Refresh** only. Invariant #4 (event-driven hotplug, `Sources/Core/Android/DeviceTracker.swift:96-118`) is **deferred**. | Active for this MVP |
 | **O2** | **Start/Stop targets the adb server** (`adb start-server` / `adb kill-server`), not emulators or devices. `kill-server` is on the human-approval list (`AGENTS.md` §7); the button + `confirm()` dialog *is* the approval. Never automatic, never in a test. | Active for this MVP |
-| **O3** | **Minimal persistence introduced**: exactly one key, `sdk.customRoot`, in a versioned JSON config (`schemaVersion: 1`). No other state is written. | Active from iteration 2 |
+| **O3** | **Minimal persistence introduced**: exactly one key, `sdk.customRoot`, in a versioned JSON config (`schemaVersion: 1`), written atomically by `src-tauri/src/config.rs`; a corrupt file is copied to `config.json.bak` and replaced by defaults with a visible warning. No other state is written. | Active |
 
 Consequence of O1 that matters: an error must not leave stale rows on screen — the list is cleared before
 the state is set to `error`.
@@ -40,6 +40,12 @@ the state is set to `error`.
 | **D10** | `npm run tauri build` | produced 1 bundle, `targets: ["nsis"]` | per ADR-0007 |
 | **D11** | no icon dependency in the MVP brief | **added `@fortawesome/free-solid-svg-icons@7.3.1`** + local renderer | user request for Font Awesome icons. `@fortawesome/fontawesome-svg-core` (+24 KB gzip) and `@fortawesome/svelte-fontawesome` (Svelte 4 typings, undeclared `csstype` peer) were both rejected on measurement — ADR-0008. Cost: +4.5 KB raw / **+2.1 KB gzip** |
 | **D12** | — | fixed a silent icon-sizing bug found only by screenshot | `src/app.css` used Svelte's `:global(svg)`, which is invalid in a plain stylesheet: the rule was dropped, the SVGs rendered at 0×0 and every button looked icon-less while `svelte-check` stayed green |
+| **D13** | D11's icon approach (`@fortawesome/free-solid-svg-icons` + local renderer) | **replaced** by the bundled Font Awesome **font** (`@fortawesome/fontawesome-free@7.3.1`, `css/fontawesome.min.css` + `css/solid.min.css` only) and `src/lib/FaIcon.svelte` | the setup-guidance brief requires the font package bundled offline, no CDN, CSP `font-src 'self'`, attribution in `NOTICE.md`, and the glyph count grew 4 → 12. ADR-0009 supersedes ADR-0008; measured cost below |
+| **D14** | — | setup guidance added as **read-only detection** (`crates/adbkit/src/setup.rs`, `SetupReport`) | the app must explain what is missing instead of failing with `ADB_NOT_FOUND`. The only process the guide runs is `adb version` |
+| **D15** | "open documentation in the system browser" | `open_docs` command with the allowlist **in Rust**; `opener:allow-open-url` capability still declared and scoped to the same four URLs | capabilities gate *plugin* IPC from the webview, not Rust calls. Validating in Rust means no DOM-level trick can widen the set, and the declared scope keeps any future JS caller equally narrow |
+| **D16** | — | config is `schemaVersion`-gated: an **unknown** version is treated as corrupt (`.bak` + defaults), never guessed | silently adopting a future schema would drop fields the user cannot see. 15 tests cover load/save/corruption/atomicity |
+| **D17** | — | three layout bugs found only by screenshot, all fixed | `.setup` content was not inside `<main>`, so the action footer was pushed out of the window; `.setup`'s `padding` shorthand (a class rule) overrode `main`'s element rule, clipping text under the scrollbar; WebView2's **overlay** scrollbars ignore `scrollbar-gutter`, so a right padding is required — same class of bug as D12 |
+| **D18** | — | `adb devices -l` immediately after a server start reports `emulator-5554 offline` with **no `model:` field**; the UI falls back to showing the serial as the name | observed on a real run and kept as-is: the row is truthful (`OFFLINE` badge). It is the documented reason the empty/offline states must remain distinguishable |
 
 ### Threat/correctness notes from implementation
 
@@ -109,14 +115,14 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 
 | Metric | Value | How |
 |---|---|---|
-| NSIS installer | **1.33 MiB** (1.34 MiB with icons) (`Android Panel (working title)_0.1.0_x64-setup.exe`) | `npm run tauri build` |
+| NSIS installer | **1.59 MiB** (`Android Panel (working title)_0.1.0_x64-setup.exe`) | `npm run tauri build` |
 | `android-panel.exe` (release, LTO, strip) | **4.27 MB** | `ls -l target/release/` |
-| Frontend bundle | **42.88 kB JS (17.14 kB gzip)**, 3.08 kB CSS (1.13 kB gzip) | vite build output, after the Font Awesome icons (ADR-0008) |
+| Frontend bundle | **48.88 kB JS (18.47 kB gzip)**, 73.47 kB CSS (**18.92 kB gzip** — the Solid glyph table), 119.48 kB `fa-solid-900.woff2` (emitted to `dist/assets/`, no CDN) | `npm run build` output |
 | Window handle after launch (release exe, warm caches) | **129 ms** | `Start-Process` + poll `MainWindowHandle` |
 | Cold start → interactive panel | **ESTIMATE < 500 ms**; not separately instrumented | — |
 | Orphans after `Stop-Process -Force` on the app | **0** `android-panel`, **0** `adb` | `Get-Process` after 3 s |
 | adb daemon after app kill | **gone**, tcp:5037 closed (see D5) | `Test-NetConnection` |
-| `cargo test --workspace` | **28 passed, 0 failed** | 15 adbkit unit + 8 parser golden + 5 src-tauri |
+| `cargo test --workspace` | **46 passed, 0 failed** (23 adbkit unit + 8 parser golden + 15 src-tauri) | local |
 | `cargo clippy --workspace --all-targets -D warnings` | clean | local |
 | `cargo fmt --all --check` | clean | local |
 | `npm run check` (svelte-check) | **0 errors, 0 warnings** | local |
@@ -127,6 +133,10 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 | Installed app launch | window handle after **67 ms** | `Start-Process` + poll |
 | Silent uninstall (`uninstall.exe /S`) | **exit 0**, install dir and HKCU entry removed | run on this machine |
 | Uninstall leftovers | `%LOCALAPPDATA%\dev.bramburn.androidpanel` (WebView2 user-data dir) **remains** | known WebView2 behaviour; NSIS does not remove it — follow-up §9.5 |
+| `adb version` starts the daemon? | **no** — tcp:5037 is closed before *and* after (`kill-server`, then `adb version`) | `Test-NetConnection` on 127.0.0.1:5037. This is why the setup probe is safe to run unprompted |
+| Guide shown when adb is absent | **yes** — with `LOCALAPPDATA` redirected to an empty folder: SDK row ✗, `Choose SDK folder…` + `Open platform-tools docs` offered, `Continue to devices` disabled — `docs/windows-port/img/shot-setup.png` | release exe, env override |
+| Guide hidden when adb is present | **yes** — `config.json` with `sdk.customRoot` at the real SDK, `LOCALAPPDATA` still redirected: app opens straight on the device panel (`docs/windows-port/img/shot-config-devices.png`) | proves config load + custom-root precedence + the hide rule |
+| Device panel, steady state | 1 row, `sdk gphone64 x86 64`, badge `READY`, serial `emulator-5554` — `docs/windows-port/img/shot-devices.png` | release exe against emulator-5554 |
 
 ## 7. UNVERIFIED items
 
@@ -137,6 +147,14 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 - The UI was **not clicked** by a human or a driver: `Refresh`/`Start`/`Stop` were verified by reading the
   code paths and by running the same adb commands from the shell, not by pressing the buttons. No WebDriver
   (`tauri-driver`/msedgedriver) was set up.
+- The native **folder picker was never clicked**: `choose_sdk_folder` needs a human (no driver is installed), so
+ its dialog is unverified. The validation/persist path behind it *is* covered — unit test
+ `state::tests::a_saved_custom_root_is_persisted_and_cached_cleared` plus the `config.json` smoke above.
+- **Offline operation was not proven by disabling the network adapter.** It was verified by asset audit
+ instead: the built `dist/assets/*.css` contains zero remote `url(...)`, the only font is the local
+ `fa-solid-900.woff2`, and the CSP is `default-src 'none'`. A true airplane-mode run is still owed.
+- No assertion that spawning `adb` never flashes a console: `CREATE_NO_WINDOW` is set and the release build is
+ `windows_subsystem = "windows"`, but this was not instrumented.
 - `window.confirm` behaviour inside WebView2 (assumed to work; not exercised).
 - NSIS install on a **clean** machine (the installer was built, never run), SmartScreen, per-user uninstall
   leftovers, `downloadBootstrapper` offline behaviour.

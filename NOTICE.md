@@ -53,8 +53,9 @@ obligations apply to every distributed build (including the installer) and must 
 
 | Asset | Version (pinned) | Licence | Obligation |
 |---|---|---|---|
-| Font Awesome Free — **Solid icons** (`@fortawesome/free-solid-svg-icons`) | 7.3.1 | **CC BY 4.0** (icons) / MIT (code) | Attribution required — see below |
-| Font Awesome Free — code (`@fortawesome/fontawesome-svg-core`) | *not bundled* (removed, see ADR-0008) | MIT | n/a |
+| Font Awesome Free (`@fortawesome/fontawesome-free`) | 7.3.1 | **CC BY 4.0** (icons) / **SIL OFL 1.1** (fonts) / MIT (code) | Attribution required — see below |
+| Font Awesome Free — `fa-solid-900.woff2` | 7.3.1 | SIL OFL 1.1 | shipped in the bundle (`dist/assets/`); attribution required |
+| Font Awesome Free — SVG core (`@fortawesome/fontawesome-svg-core`) | *not bundled* | MIT | n/a |
 | Tauri / `wry` / `tao` / `windows-sys` | see `Cargo.lock` | MIT or Apache-2.0 | reproduce notices in the installer |
 | Svelte, Vite, TypeScript | see `package-lock.json` | MIT | reproduce notices in the installer |
 
@@ -64,6 +65,9 @@ obligations apply to every distributed build (including the installer) and must 
 > Icons: CC BY 4.0 — https://creativecommons.org/licenses/by/4.0/
 > Code: MIT — https://opensource.org/licenses/MIT
 
-The glyphs used are: `arrows-rotate`, `play`, `stop`, `mobile-screen` (Solid). They are shipped as inline
-SVG path data in the frontend bundle; the licence does **not** permit removing this attribution when the app
-is redistributed. Changed files, if any, are limited to the four icon definitions being consumed unmodified.
+The glyphs used are: `circle-check`, `circle-xmark`, `circle-info`, `triangle-exclamation`,
+`mobile-screen`, `display`, `rotate`, `play`, `stop`, `screwdriver-wrench`, `folder-open`,
+`arrow-up-right-from-square` (Solid). They ship as the locally bundled `fa-solid-900.woff2` font plus CSS
+class references — there is no CDN and no runtime download (`docs/adr/ADR-0009-icons-webfont.md`). The
+licence does **not** permit removing this attribution when the app is redistributed. Changed files, if any,
+are limited to the unmodified font and stylesheet from the npm package, plus `src/lib/FaIcon.svelte`.

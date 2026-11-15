@@ -20,6 +20,43 @@ impl AppError {
         }
     }
 
+    /// The folder the user picked is not an SDK root (no `platform-toolsdb.exe`).
+    pub fn invalid_sdk(message: impl Into<String>) -> Self {
+        Self::new("SDK_INVALID", message)
+    }
+
+    /// Writing the config file failed.
+    pub fn config_write(detail: impl Into<String>) -> Self {
+        Self::new(
+            "CONFIG_WRITE_FAILED",
+            format!(
+                "Could not save your settings: {}. The choice will work for this session only.",
+                detail.into()
+            ),
+        )
+    }
+
+    /// The folder-picker dialog went away without answering.
+    pub fn dialog_closed() -> Self {
+        Self::new(
+            "DIALOG_CLOSED",
+            "The folder dialog closed unexpectedly. Try again.",
+        )
+    }
+
+    /// A URL that is not on the documentation allowlist.
+    pub fn url_not_allowed(url: impl Into<String>) -> Self {
+        Self::new(
+            "URL_NOT_ALLOWED",
+            format!("Refusing to open an unknown link: {}", url.into()),
+        )
+    }
+
+    /// The system browser could not be launched.
+    pub fn open_failed(message: impl Into<String>) -> Self {
+        Self::new("OPEN_FAILED", message)
+    }
+
     pub fn sdk_missing() -> Self {
         Self::new(
             "SDK_NOT_FOUND",

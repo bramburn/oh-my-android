@@ -71,6 +71,22 @@ jobs:
           }
           Write-Host "No Command::new outside crates/adbkit."
 
+      - name: Guard - offline-first (no remote assets in the UI)
+        shell: pwsh
+        run: |
+          # The app must work with the network disabled: icons are a locally bundled font, nothing is
+          # fetched at runtime (ADR-0009). The only permitted absolute URLs are the documentation links,
+          # which are handed to the system browser and never loaded by the webview.
+          # `src/` only: node_modules is never inside it, so no exclusion regex is needed.
+          $files = @(Get-ChildItem -Recurse -Include *.svelte, *.css, *.ts, *.html -Path src |
+            ForEach-Object FullName) + (Resolve-Path index.html).Path
+          $bad = Select-String -Path $files -Pattern 'https?://(?!developer\.android\.com)[^\s"'')]+' -ErrorAction SilentlyContinue
+          if ($bad) {
+            $bad | ForEach-Object { Write-Host "::error file=$($_.Path),line=$($_.LineNumber)::$($_.Line.Trim())" }
+            throw "Remote asset URL in UI source (the app must be offline-first)."
+          }
+          Write-Host "No remote assets in the UI source."
+
       - name: Guard - no Tauri v1 APIs
         shell: pwsh
         run: |

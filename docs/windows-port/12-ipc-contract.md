@@ -64,6 +64,30 @@ Commands **deliberately absent**: `shell_exec` (arbitrary shell is a security ho
 catalog; a debug-only console in M4 is capability-gated and read-only by default), `file_read_any`
 (`fs` plugin scope covers what the UI needs).
 
+## 2.1 As built (MVP)
+
+The table above is the **target** surface. What actually ships today is six commands; the names differ
+(`setup_report` rather than `settings_get`/`tools_locate`) because the MVP has no settings screen — the guide
+reads state instead of asking for it. Renaming is a UI+backend change and belongs to M2, not to drift.
+
+| Command | Args (TS) | Returns | mut | Notes |
+|---|---|---|---|---|
+| `setup_report` | — | `SetupReport` | | read-only detection; the only process it runs is `adb version` |
+| `choose_sdk_folder` | — | `SetupReport` | | native picker → validate → persist → re-detect. **Cancel is not an error** |
+| `list_devices` | — | `Device[]` | | `adb devices -l`, parsed in `adbkit` |
+| `adb_start` | — | `void` | ✓ (server) | `adb start-server`, all-null stdio |
+| `adb_stop` | — | `void` | ✓ (server) | `adb kill-server`, behind `confirm()` (override O2) |
+| `open_docs` | `{url: string}` | `void` | | allowlist checked **in Rust**; rejects anything outside four URLs |
+
+`SetupReport` (`adbkit::setup`): `{studio, sdk: {root, adb, source} | null, adbVersion, emulator, avdCount,
+envHome, customRoot, warning}`. The UI rule is exactly one branch: **`sdk === null` ⇒ the guide; otherwise the
+device panel**, with the guide reachable from the header wrench button.
+
+Error codes added by this milestone: `SDK_INVALID` (picked folder has no `platform-toolsdb.exe`),
+`CONFIG_WRITE_FAILED` (choice works for the session only), `DIALOG_CLOSED`, `URL_NOT_ALLOWED`, `OPEN_FAILED`.
+They follow the taxonomy below (`{code, message}` only — no `details`/`retryable`/`hint` yet; adding those
+fields is a contract-wide change).
+
 ## 3. Error taxonomy
 
 Rust: `thiserror` enums in `crates/adbkit` and services; mapped to `AppError` at the command boundary.

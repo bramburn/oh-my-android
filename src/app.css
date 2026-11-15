@@ -1,5 +1,5 @@
-/* Monochrome only. No hue anywhere: states are distinguished by text, weight and border
-   (`docs/windows-port/14-frontend-design.md`, MVP variant). */
+/* Monochrome only. No hue anywhere: states are distinguished by icon SHAPE + text, never colour.
+   (docs/adr/ADR-0009-icons-webfont.md, src/AGENTS.md §1) */
 
 :root {
   --bg: #111111;
@@ -53,13 +53,25 @@ body {
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
+}
+
+/* Icons: Font Awesome is a local font; it inherits the text colour, so it is monochrome by construction */
+
+.fa-solid {
+  color: inherit;
 }
 
 /* Layout */
 
 header {
-  padding: 14px 16px 10px;
+  padding: 12px 16px 10px;
   border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: none;
 }
 
 .title {
@@ -73,7 +85,13 @@ header {
 main {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 16px;
+  /* WebView2 uses overlay scrollbars: `scrollbar-gutter` does not reserve space, so the right padding
+     keeps long lines out from under the scrollbar. */
+  scrollbar-gutter: stable;
+  overflow-x: hidden;
+  padding-right: 22px;
+  padding: 12px 16px 16px;
+  min-height: 0;
 }
 
 footer {
@@ -81,26 +99,7 @@ footer {
   padding: 12px 16px;
   display: flex;
   gap: 8px;
-}
-
-/* Icons: inline SVG from Font Awesome core, sized to the text and tinted by currentColor */
-
-.icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex: none;
-}
-
-.icon svg {
-  height: 1em;
-  width: 1em;
-  fill: currentColor;
-}
-
-.icon.lg svg {
-  height: 1.15em;
-  width: 1.15em;
 }
 
 /* Buttons: min 40px hit target, visible focus ring, no colour */
@@ -109,8 +108,8 @@ button {
   font: inherit;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   justify-content: center;
+  gap: 7px;
   min-height: 40px;
   padding: 0 14px;
   color: var(--fg);
@@ -134,10 +133,6 @@ button:disabled {
   opacity: 0.7;
 }
 
-button.primary .icon svg {
-  opacity: 0.9;
-}
-
 button.primary {
   font-weight: 600;
   border-color: var(--fg);
@@ -146,6 +141,13 @@ button.primary {
 button:focus-visible {
   outline: 2px solid var(--fg);
   outline-offset: 2px;
+}
+
+.header-btn {
+  min-height: 30px;
+  min-width: 30px;
+  padding: 0 8px;
+  gap: 0;
 }
 
 /* Device list */
@@ -173,11 +175,6 @@ button:focus-visible {
   gap: 8px;
 }
 
-.device-model {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
 .device-name {
   display: flex;
   align-items: center;
@@ -185,8 +182,13 @@ button:focus-visible {
   min-width: 0;
 }
 
-.device-name .icon {
+.device-name .fa-solid {
   color: var(--muted);
+}
+
+.device-model {
+  font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .device-serial {
@@ -196,8 +198,12 @@ button:focus-visible {
   overflow-wrap: anywhere;
 }
 
-.badge .icon {
-  font-size: 9px;
+.device-hint {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  border-top: 1px dashed var(--line);
+  padding-top: 6px;
 }
 
 .badge {
@@ -212,6 +218,7 @@ button:focus-visible {
   padding: 2px 8px;
   background: var(--badge);
   white-space: nowrap;
+  flex: none;
 }
 
 .badge.ready {
@@ -228,12 +235,20 @@ button:focus-visible {
 .state {
   color: var(--muted);
   padding: 18px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .state h2 {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 15px;
   color: var(--fg);
+}
+
+.state p {
+  margin: 0;
 }
 
 .banner {
@@ -242,7 +257,7 @@ button:focus-visible {
   border-radius: var(--radius);
   background: var(--panel);
   padding: 10px 12px;
-  margin-bottom: 12px;
+  margin: 0 0 12px;
   display: flex;
   gap: 10px;
   align-items: flex-start;
@@ -252,6 +267,7 @@ button:focus-visible {
 .banner p {
   margin: 0;
   overflow-wrap: anywhere;
+  flex: 1;
 }
 
 .banner button {
@@ -263,4 +279,130 @@ button:focus-visible {
 .count {
   font-size: 12px;
   color: var(--muted);
+  margin: 0 0 8px;
+}
+
+/* Setup screen */
+
+.setup {
+  /* Only vertical: horizontal padding belongs to `main` (a class rule would otherwise win over the
+     element selector and let the panel hug the window edge, clipping long lines under the scrollbar). */
+  padding-top: 4px;
+  padding-bottom: 8px;
+}
+
+.setup-title {
+  font-size: 16px;
+  margin: 0 0 6px;
+}
+
+.setup-intro {
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+
+.checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.check {
+  display: flex;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 10px 12px;
+}
+
+.check-icon {
+  flex: none;
+  width: 18px;
+  text-align: center;
+  color: var(--muted);
+  padding-top: 1px;
+}
+
+.check.ok .check-icon {
+  color: var(--fg);
+}
+
+.check-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.check-title {
+  font-size: 14px;
+  margin: 0 0 2px;
+  font-weight: 600;
+}
+
+.check-path {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.check-meta {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.check-hint {
+  margin: 2px 0 0;
+  color: var(--muted);
+}
+
+.check-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.check-actions button {
+  min-height: 34px;
+  font-size: 13px;
+  padding: 0 10px;
+}
+
+.hint-block {
+  margin-top: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 10px 12px;
+}
+
+.hint-block p {
+  margin: 0 0 8px;
+}
+
+.hint-block button {
+  min-height: 34px;
+  font-size: 13px;
+  padding: 0 10px;
+}
+
+.setup-note {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--badge);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 0 3px;
 }

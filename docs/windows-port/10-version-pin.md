@@ -100,7 +100,7 @@ they are the effective pins for the MVP.
 | `windows-sys` | **0.61.2** | crates.io API | 2026-11-15 | only the `Win32_System_JobObjects`, `Win32_Foundation` features |
 | `@sveltejs/vite-plugin-svelte` | **7.3.1** | npm registry | 2026-11-15 | must match `svelte` 5 / `vite` 8 |
 | `svelte-check` | **4.7.8** | npm registry | 2026-11-15 | the `npm run check` gate |
-| `@fortawesome/free-solid-svg-icons` | **7.3.1** | npm registry | 2026-11-15 | icon source only, tree-shaken; **CC BY 4.0**, attribution in `NOTICE.md` (ADR-0008) |
+| `@fortawesome/fontawesome-free` | **7.3.1** | npm registry | 2026-11-15 | icon font, bundled offline (`css/fontawesome.min.css` + `css/solid.min.css` only, woff2 emitted by Vite); **CC BY 4.0 / OFL 1.1 / MIT**, attribution in `NOTICE.md` (ADR-0009) |
 | Svelte 5 + Vite + TS **as installed** | svelte 5.57.3, vite 8.3.8, **typescript 5.9.3** | npm | 2026-11-15 | TS pinned to 5.9.3: `svelte-check@4.7.8` peers `^5 \|\| ^6`, so the documented 5.9.x fallback (§3) is **in force** |
 | Rust toolchain | **1.90.0** `x86_64-pc-windows-msvc` | `rustup show` (local) | 2026-11-15 | bumped from 1.89.0: `tauri` 2.12.5 declares `rust-version = 1.90`. MSVC link step verified with a scratch `cargo new` build |
 | WebView2 runtime | `157.0.4341.57` | registry `pv` on this machine | 2026-11-15 | the dev/build machine; target machines are still `UNVERIFIED` (spike S5) |
