@@ -83,3 +83,5 @@ tmp/
 # NOTE: lockfiles are deliberately NOT ignored (package-lock.json, Cargo.lock,
 # packages.lock.json, *.lock, Directory.Packages.props, global.json). Committing them
 # is required for reproducible builds, which the fork's ADR process depends on.
+# Local research scratch (spike dumps, doc fetches)
+.scratch/
