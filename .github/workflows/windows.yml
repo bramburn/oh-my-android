@@ -98,12 +98,34 @@ jobs:
       - name: Guard - no Tauri v1 APIs
         shell: pwsh
         run: |
-          $patterns = 'tauri::api::', 'allowlist', '"allowlist"'
-          $files = Get-ChildItem -Recurse -Include *.rs, *.json src-tauri, src, crates |
-            Where-Object { $_.FullName -notmatch '\\target\\|\\gen\\' }
-          $bad = $files | Select-String -Pattern $patterns -ErrorAction SilentlyContinue
-          if ($bad) { $bad | ForEach-Object { Write-Host "::error::$($_.Path):$($_.LineNumber) $($_.Line.Trim())" }; throw "Tauri v1 API detected." }
-          Write-Host "No Tauri v1 APIs."
+          # v1 surface: `tauri::api::*` in Rust, and the top-level "allowlist" config key. The bare word
+          # "allowlist" is a normal English word used in this codebase (URL allowlists in commands.rs), so
+          # matching it unquoted in Rust would only produce false positives.
+          $failed = @()
+
+          $rust = Get-ChildItem -Recurse -Include *.rs src-tauri, src, crates |
+            Where-Object { $_.FullName -notlike '*\target\*' }
+          $api = $rust | Select-String -Pattern 'tauri::api::' -ErrorAction SilentlyContinue
+          foreach ($hit in $api) { $failed += "$($hit.Path):$($hit.LineNumber) tauri::api:: (v2 lives in tauri::* only)" }
+
+          $configs = Get-ChildItem -Recurse -Include *.json, *.toml, *.yaml, *.yml src-tauri, src, crates |
+            Where-Object { $_.FullName -notlike '*\target\*' -and $_.FullName -notlike '*\gen\*' -and $_.FullName -notlike '*node_modules*' }
+          $key = $configs | Select-String -Pattern '"allowlist"\s*:' -ErrorAction SilentlyContinue
+          foreach ($hit in $key) { $failed += ('{0}:{1} "allowlist" config key (v1)' -f $hit.Path, $hit.LineNumber) }
+
+          $conf = 'src-tauri/tauri.conf.json'
+          if (Test-Path $conf) {
+            $root = Get-Content $conf -Raw | ConvertFrom-Json
+            if ($root.PSObject.Properties.Name -contains 'tauri') {
+              $failed += ('{0} top-level "tauri" key (v1 layout)' -f $conf)
+            }
+          }
+
+          if ($failed.Count -gt 0) {
+            $failed | ForEach-Object { Write-Host "::error::$_" }
+            throw "Tauri v1 API or config detected."
+          }
+          Write-Host "No Tauri v1 APIs or v1 config keys."
 
       - name: Package (NSIS installer)
         run: npm run tauri build
