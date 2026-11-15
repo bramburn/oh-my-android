@@ -93,6 +93,7 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 | `npm run check` (svelte-check) | **0 errors, 0 warnings** | local |
 | `npm audit` | 2 low-severity advisories in dev dependencies | `npm install` output; not runtime (`UNVERIFIED` impact) |
 | Size budget (`00-target-and-constraints.md`: ≤25 MB) | **1.33 MiB → 5 % of budget** | ✅ |
+| Device list with a real device | **1 row**: `sdk gphone64 x86 64` (underscores → spaces), badge `READY`, serial `emulator-5554` — `screenshots/mvp-device-list.png` | launched release exe against emulator-5554 |
 | NSIS silent install (`/S`, per-user) | **exit 0**, installed to `%LOCALAPPDATA%\Android Panel (working title)` (`android-panel.exe` 4.28 MB + `uninstall.exe`), HKCU uninstall entry created | run on this machine |
 | Installed app launch | window handle after **67 ms** | `Start-Process` + poll |
 | Silent uninstall (`uninstall.exe /S`) | **exit 0**, install dir and HKCU entry removed | run on this machine |
@@ -100,9 +101,10 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 
 ## 7. UNVERIFIED items
 
-- **No device was ever connected.** `adb devices -l` returned an empty list on this machine, so the
-  `empty` UI state is the only list state exercised for real; the `ready` list state is exercised only by
-  fixtures and by `cargo test`.
+- **Resolved 2026-11-15 (post-MVP):** the `Pixel_8` AVD was booted and the release build rendered it
+  correctly — one row, `sdk gphone64 x86 64`, badge `READY`, serial `emulator-5554`
+  (`screenshots/mvp-device-list.png`). The `empty` state was observed before boot (no devices).
+- Still unexercised with a real device: `unauthorized`/`offline` rendering, and every button press (see below).
 - The UI was **not clicked** by a human or a driver: `Refresh`/`Start`/`Stop` were verified by reading the
   code paths and by running the same adb commands from the shell, not by pressing the buttons. No WebDriver
   (`tauri-driver`/msedgedriver) was set up.
