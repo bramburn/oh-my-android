@@ -36,7 +36,10 @@ fn basic_emulator_and_usb_device() {
 #[test]
 fn mixed_states_notes_blank_lines_and_crlf() {
     let raw = fixture("devices_l_mixed.txt");
-    assert!(raw.contains('\r'), "fixture must keep CRLF to test the Windows rule");
+    assert!(
+        raw.contains('\r'),
+        "fixture must keep CRLF to test the Windows rule"
+    );
 
     let got = parse_devices(&raw);
     assert_eq!(

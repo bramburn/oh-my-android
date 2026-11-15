@@ -4,6 +4,9 @@
 //! `src-tauri` and the UI never do. See `AGENTS.md` in this directory.
 
 pub mod parser;
+pub mod runner;
+pub mod sdk;
+pub mod winjob;
 
 pub use parser::{parse_devices, Device, DeviceState};
 
