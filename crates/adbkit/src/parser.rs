@@ -78,25 +78,41 @@ pub fn parse_devices(stdout: &str) -> Vec<Device> {
         .collect()
 }
 
+/// First line of `adb version`, trimmed — e.g. `Android Debug Bridge version 1.0.41`.
+///
+/// `adb version` is client-local: it prints the version and exits **without** starting the adb server, which
+/// is why it is the only command the setup screen may run (ADR-0007 Amendment 2 §1).
+pub fn parse_adb_version(stdout: &str) -> Option<String> {
+    stdout
+        .lines()
+        .map(|line| line.trim_end_matches('\r').trim())
+        .find(|line| !line.is_empty())
+        .map(str::to_string)
+}
+
 #[cfg(test)]
-mod tests {
-    use super::*;
+mod version_tests {
+    use super::parse_adb_version;
 
     #[test]
-    fn header_only_yields_nothing() {
-        assert!(parse_devices("List of devices attached\n\n").is_empty());
+    fn takes_the_first_line_and_strips_crlf() {
+        let raw = "Android Debug Bridge version 1.0.41\r\nVersion 37.0.1-15733141\r\n";
+        assert_eq!(
+            parse_adb_version(raw).as_deref(),
+            Some("Android Debug Bridge version 1.0.41")
+        );
     }
 
     #[test]
-    fn adb_notes_are_not_devices() {
-        let out = "List of devices attached\n* daemon not running; starting now at tcp:5037\n* daemon started successfully\n";
-        assert!(parse_devices(out).is_empty());
+    fn skips_leading_blank_lines() {
+        assert_eq!(
+            parse_adb_version("\n\nAndroid Debug Bridge version 1.0.41\n").as_deref(),
+            Some("Android Debug Bridge version 1.0.41")
+        );
     }
 
     #[test]
-    fn keeps_unknown_state_as_other() {
-        let devices = parse_devices("abc123 bootloader usb:1-1 transport_id:9\n");
-        assert_eq!(devices.len(), 1);
-        assert_eq!(devices[0].state, DeviceState::Other);
+    fn empty_output_is_none() {
+        assert!(parse_adb_version(" \r\n\n").is_none());
     }
 }

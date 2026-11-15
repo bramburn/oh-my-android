@@ -6,9 +6,13 @@
 pub mod parser;
 pub mod runner;
 pub mod sdk;
+pub mod serde_path;
+pub mod setup;
 pub mod winjob;
 
 pub use parser::{parse_devices, Device, DeviceState};
+pub use sdk::SdkLocation;
+pub use setup::{detect, SetupReport};
 
 /// Everything that can go wrong talking to adb.
 ///
