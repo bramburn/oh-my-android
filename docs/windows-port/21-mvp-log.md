@@ -93,6 +93,10 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 | `npm run check` (svelte-check) | **0 errors, 0 warnings** | local |
 | `npm audit` | 2 low-severity advisories in dev dependencies | `npm install` output; not runtime (`UNVERIFIED` impact) |
 | Size budget (`00-target-and-constraints.md`: ≤25 MB) | **1.33 MiB → 5 % of budget** | ✅ |
+| NSIS silent install (`/S`, per-user) | **exit 0**, installed to `%LOCALAPPDATA%\Android Panel (working title)` (`android-panel.exe` 4.28 MB + `uninstall.exe`), HKCU uninstall entry created | run on this machine |
+| Installed app launch | window handle after **67 ms** | `Start-Process` + poll |
+| Silent uninstall (`uninstall.exe /S`) | **exit 0**, install dir and HKCU entry removed | run on this machine |
+| Uninstall leftovers | `%LOCALAPPDATA%\dev.bramburn.androidpanel` (WebView2 user-data dir) **remains** | known WebView2 behaviour; NSIS does not remove it — follow-up §9.5 |
 
 ## 7. UNVERIFIED items
 
@@ -119,6 +123,11 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 3. `app.css` uses `code` and `pre` styling? No — deliberately unstyled; add only if a screen needs it.
 4. Replace `window.confirm` with an in-app dialog when Settings lands (native dialogs need a capability
    decision).
+5. NSIS uninstall leaves the WebView2 user-data directory (`%LOCALAPPDATA%\dev.bramburn.androidpanel`)
+   behind. Either delete it from an `installerHooks` uninstall step (it may contain cached UI state) or
+   document it as intentional; decide when a settings file lands there.
+6. The UI still needs a real interactive pass: every button, both server actions, the confirm dialog, and the
+   `sdkMissing` path (rename the SDK env var to simulate).
 
 ## 8. Next milestone proposal
 
