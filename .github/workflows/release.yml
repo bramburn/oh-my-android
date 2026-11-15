@@ -1,0 +1,111 @@
+name: Release
+
+# Publishing a release is: bump `version` in src-tauri/tauri.conf.json (+ package.json), commit, then
+# push a tag `v<version>`. This workflow refuses to build when the tag and the manifest disagree, then
+# attaches the installer and its checksum to a draft→published GitHub release.
+#
+# There is no auto-updater yet (ADR-0007): a release is a download page, not an update channel.
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  release:
+    name: release
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Rust toolchain
+        run: rustup show active-toolchain || rustup toolchain install
+
+      - name: Cache cargo
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: cargo-release-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: cargo-${{ runner.os }}-
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      # A tag that does not match the manifests would ship an installer whose name lies. Fail loudly.
+      - name: Guard - tag matches the manifest version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}" -replace '^v', ''
+          $conf = Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json
+          $pkg = Get-Content package.json -Raw | ConvertFrom-Json
+          Write-Host "tag=$tag tauri.conf=$($conf.version) package.json=$($pkg.version)"
+          if ($tag -ne $conf.version) { throw "Tag v$tag does not match tauri.conf.json $($conf.version)." }
+          if ($tag -ne $pkg.version) { throw "Tag v$tag does not match package.json $($pkg.version)." }
+
+      - name: Build frontend (svelte-check + vite)
+        run: npm run build
+
+      - name: Formatting
+        run: cargo fmt --all --check
+
+      - name: Clippy (warnings are errors)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: Tests
+        run: cargo test --workspace
+
+      - name: Package (NSIS installer)
+        run: npm run tauri build
+
+      - name: Checksums
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          $hash = (Get-FileHash $exe.FullName -Algorithm SHA256).Hash.ToLower()
+          "$hash  $($exe.Name)" | Out-File -FilePath SHA256SUMS.txt -Encoding ascii
+          Get-Content SHA256SUMS.txt
+
+      - name: Compose release notes
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $prev = gh release list --limit 1 --json tagName --jq '.[0].tagName' 2>$null
+          $body = Get-Content .github/release-body.md -Raw
+          if ($prev) {
+            $body += "`n**Full changelog**: https://github.com/${{ github.repository }}/compare/$prev...$tag`n"
+          }
+          $body | Out-File -FilePath notes.md -Encoding utf8
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Publish release
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          gh release create $tag `
+            --title "Android Panel $tag" `
+            --notes-file notes.md `
+            $(Get-ChildItem target/release/bundle/nsis/*-setup.exe | ForEach-Object FullName) `
+            SHA256SUMS.txt
+        env:
+          GH_TOKEN: ${{ github.token }}

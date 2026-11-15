@@ -1,5 +1,9 @@
 # Oh My Android — a **Windows-only** fork
 
+[![Windows CI](https://github.com/bramburn/oh-my-android/actions/workflows/windows.yml/badge.svg)](https://github.com/bramburn/oh-my-android/actions/workflows/windows.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)](LICENSE)
+[![Contributing](https://img.shields.io/badge/contributing-guide-black.svg)](CONTRIBUTING.md)
+
 A fork of **[Oh My Android](https://github.com/ateymoori/oh-my-android)** (MIT, © 2026 Royan AB), a native
 macOS menu-bar GUI and embedded MCP server for `adb`-driven Android testing.
 
@@ -304,7 +308,9 @@ Start with [`AGENTS.md`](AGENTS.md) (invariants and file map) and
 | [`docs/architecture/06-adb-integration.md`](docs/architecture/06-adb-integration.md) | Every upstream adb call, cited (the behavioural spec) |
 | [`docs/feature-matrix.md`](docs/feature-matrix.md) | Every feature with complexity, Windows feasibility, MVP tier |
 | [`docs/git-setup.md`](docs/git-setup.md) · [`docs/legal.md`](docs/legal.md) | Remotes/branches · licence obligations and naming |
-| [`docs/CONTRIBUTING-fork.md`](docs/CONTRIBUTING-fork.md) | Fork conventions, ADB safety rules, PR checklist |
+| [`CONTRIBUTING.md`](CONTRIBUTING.md) | **How to contribute**: setup, gates, branches, PRs, release process |
+| [`SECURITY.md`](SECURITY.md) | Private vulnerability reporting and the app's exact process/network surface |
+| [`docs/git-setup.md`](docs/git-setup.md) | Remotes, branch protection, sync-upstream playbook |
 
 Upstream's own maps are kept: [`docs/repo-inventory.md`](docs/repo-inventory.md),
 [`docs/coverage.md`](docs/coverage.md), [`docs/assumptions.md`](docs/assumptions.md),
@@ -332,6 +338,21 @@ string): `adb version` (read-only probe), `adb devices -l`, `adb start-server`, 
 invoked automatically or from a test. Quitting the app also tears the adb daemon down (measured; see
 `21-mvp-log.md` §3 D5). Rules for future work are in [`docs/CONTRIBUTING-fork.md`](docs/CONTRIBUTING-fork.md)
 and [`AGENTS.md`](AGENTS.md).
+
+## Contributing
+
+`main` is protected: the maintainer pushes directly, everyone else opens a pull request against `main`
+and needs the `windows` CI check green plus one approval. Squash merge, branch deleted on merge.
+
+Read [`CONTRIBUTING.md`](CONTRIBUTING.md) first — it covers the development setup, the gates CI enforces,
+branch/commit conventions, the ADR and doc-drift rules, and the ADB safety rules. In short:
+
+- `Sources/**` is read-only; do not edit the reference implementation.
+- Only `crates/adbkit` may spawn a process, always with an argv array.
+- Offline-first, monochrome, Windows-only, no telemetry.
+- Behaviour changes ship with their docs (`README.md`, `12-ipc-contract.md`, `21-mvp-log.md`) in the same PR.
+
+Security issues: **not** via a public issue — see [`SECURITY.md`](SECURITY.md).
 
 ## Licence
 

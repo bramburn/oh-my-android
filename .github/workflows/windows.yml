@@ -1,12 +1,15 @@
 name: Windows
 
-# Added alongside build.yml (the untouched macOS workflow). Windows app only: crates/, src-tauri/, src/.
+# The only workflow that gates this fork's product. The macOS workflow (build.yml) is inherited from
+# upstream and deliberately left untouched: Sources/ is a read-only reference implementation.
+#
+# No `paths:` filter on pull_request on purpose — a required status check that never runs blocks every
+# merge, so the cheap path filter would be a footgun the day branch protection requires this job.
+
 on:
   push:
-    branches: [main, feat/windows-gui-port, feat/win-mvp-tauri]
-    paths: ['Cargo.toml', 'Cargo.lock', 'crates/**', 'src-tauri/**', 'src/**', 'package.json', 'package-lock.json', '.github/workflows/windows.yml']
+    branches: [main]
   pull_request:
-    paths: ['Cargo.toml', 'Cargo.lock', 'crates/**', 'src-tauri/**', 'src/**', 'package.json', 'package-lock.json', '.github/workflows/windows.yml']
   workflow_dispatch:
 
 permissions:
@@ -16,12 +19,15 @@ concurrency:
   group: windows-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+
 jobs:
-  build:
+  windows:
+    name: windows
     runs-on: windows-latest
     timeout-minutes: 45
-    env:
-      CARGO_TERM_COLOR: always
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -38,6 +44,7 @@ jobs:
             ~/.cargo/git/db
             target
           key: cargo-${{ runner.os }}-${{ hashFiles('**/Cargo.lock', 'rust-toolchain.toml') }}
+          restore-keys: cargo-${{ runner.os }}-
 
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -48,7 +55,8 @@ jobs:
         run: npm ci
 
       # `tauri::generate_context!` embeds frontendDist at compile time, so the UI is built first.
-      - name: Build frontend
+      # `npm run build` also runs svelte-check, so this step is the type-check gate too.
+      - name: Build frontend (svelte-check + vite)
         run: npm run build
 
       - name: Formatting
@@ -63,8 +71,8 @@ jobs:
       - name: Guard - adb is spawned only in crates/adbkit
         shell: pwsh
         run: |
-          $hits = Select-String -Path (Get-ChildItem -Recurse -Include *.rs src-tauri, src | ForEach-Object FullName) `
-                    -Pattern 'Command::new' -ErrorAction SilentlyContinue
+          $hits = Select-String -Path (Get-ChildItem -Recurse -Include *.rs src-tauri, src |
+            ForEach-Object FullName) -Pattern 'Command::new' -ErrorAction SilentlyContinue
           if ($hits) {
             $hits | ForEach-Object { Write-Host "::error file=$($_.Path),line=$($_.LineNumber)::$($_.Line.Trim())" }
             throw "Process spawning outside crates/adbkit is forbidden (AGENTS.md invariant #1)."
@@ -92,13 +100,21 @@ jobs:
         run: |
           $patterns = 'tauri::api::', 'allowlist', '"allowlist"'
           $files = Get-ChildItem -Recurse -Include *.rs, *.json src-tauri, src, crates |
-                   Where-Object { $_.FullName -notmatch '\\target\\|\\gen\\' }
+            Where-Object { $_.FullName -notmatch '\\target\\|\\gen\\' }
           $bad = $files | Select-String -Pattern $patterns -ErrorAction SilentlyContinue
           if ($bad) { $bad | ForEach-Object { Write-Host "::error::$($_.Path):$($_.LineNumber) $($_.Line.Trim())" }; throw "Tauri v1 API detected." }
           Write-Host "No Tauri v1 APIs."
 
       - name: Package (NSIS installer)
         run: npm run tauri build
+
+      - name: Installer summary
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem target/release/bundle/nsis/*-setup.exe | Select-Object -First 1
+          $mb = [math]::Round($exe.Length / 1MB, 2)
+          "**Installer**: ``$($exe.Name)`` — $mb MiB" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+          "**App**: ``target/release/android-panel.exe``" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
 
       - name: Upload installer
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

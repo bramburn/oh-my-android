@@ -1,7 +1,14 @@
 name: Bug report
-description: Something does not work as expected.
+description: Something in the Windows app does not work as expected.
 labels: [bug]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        This repository ships the **Windows** app. The upstream macOS app lives at
+        [ateymoori/oh-my-android](https://github.com/ateymoori/oh-my-android) — please report there if you
+        are running the macOS build.
+
   - type: textarea
     id: what
     attributes:
@@ -9,16 +16,68 @@ body:
       description: What you did, what you expected, and what happened instead.
     validations:
       required: true
+
   - type: input
     id: versions
     attributes:
-      label: Versions
-      placeholder: Oh My Android 0.3.0, macOS 26.1, emulator API 36 / Pixel 8 Android 15
+      label: App and OS versions
+      description: Installer file name (it contains the version), Windows version, WebView2 version.
+      placeholder: "Android Panel (working title)_0.1.0_x64-setup.exe · Windows 11 23H2 · WebView2 157.0.x"
     validations:
       required: true
-  - type: textarea
+
+  - type: input
     id: adb
     attributes:
-      label: adb output
-      description: Output of `adb devices -l` and of the failing command, if you know it.
+      label: adb version and location
+      description: |
+        Output of `adb version`, and which SDK folder the app is using — open the setup screen with the
+        wrench button; it shows both.
+      placeholder: "Android Debug Bridge version 1.0.41 (37.0.1) — C:\\Users\\me\\AppData\\Local\\Android\\Sdk"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: screen
+    attributes:
+      label: Which screen
+      options:
+        - Setup guide (SDK / adb / Studio detection)
+        - Device list
+        - Start / Stop adb server
+        - Installer or uninstall
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: device-list
+    attributes:
+      label: Device list output
+      description: |
+        If the problem is about a missing or mislabelled device, paste the raw output of
+        `adb devices -l` (serials can be redacted).
       render: text
+    validations:
+      required: false
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Exact error text
+      description: The sentence the app showed, verbatim. Do not paraphrase it.
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I am running the Windows build, not the macOS one.
+          required: true
+        - label: I have an Android SDK with `platform-tools\adb.exe` installed (the app does not bundle adb).
+          required: true
+        - label: This is not a security issue (those go to SECURITY.md, privately).
+          required: true

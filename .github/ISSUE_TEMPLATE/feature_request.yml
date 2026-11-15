@@ -1,15 +1,55 @@
 name: Feature request
-description: A test chore Oh My Android should turn into one click.
+description: Suggest a capability for the Windows app.
 labels: [enhancement]
 body:
-  - type: textarea
-    id: need
+  - type: markdown
     attributes:
-      label: What do you do today
-      description: The manual steps or adb command you run now.
+      value: |
+        Please check the parity plan first: `docs/windows-port/04-feature-parity-plan.md` and
+        `docs/feature-matrix.md` list what is planned, deferred, or deliberately dropped (the MCP server,
+        for example, is **not** coming to this fork).
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that the app makes hard today?
     validations:
       required: true
+
   - type: textarea
-    id: idea
+    id: proposal
     attributes:
-      label: What Oh My Android should do
+      label: What you would like
+      description: The behaviour you want. Sketches or mockups welcome; the UI is monochrome by design.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+      description: Including doing it with `adb` by hand — that is often the honest answer for a niche need.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: upstream
+    attributes:
+      label: Does the upstream macOS app do this?
+      options:
+        - "Yes — it is in the parity plan already"
+        - "No — this is new for the Windows app"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: constraints
+    attributes:
+      label: Constraints
+      options:
+        - label: This does not require the MCP server (deliberately not ported).
+          required: true
+        - label: This can work with no network access.
+          required: true
