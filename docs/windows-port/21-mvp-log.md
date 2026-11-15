@@ -132,6 +132,8 @@ Measured on the dev machine (Windows 11, WebView2 `157.0.4341.57`, rustc 1.90.0,
 | NSIS silent install (`/S`, per-user) | **exit 0**, installed to `%LOCALAPPDATA%\Android Panel (working title)` (`android-panel.exe` 4.28 MB + `uninstall.exe`), HKCU uninstall entry created | run on this machine |
 | Installed app launch | window handle after **67 ms** | `Start-Process` + poll |
 | Silent uninstall (`uninstall.exe /S`) | **exit 0**, install dir and HKCU entry removed | run on this machine |
+| Round trip after the setup-guidance build: silent install → launch → silent uninstall | install **exit 0**; installed `android-panel.exe` (4.81 MB) launches and shows the device panel; uninstall **exit 0**; install dir and HKCU entry gone (0 entries); only the WebView2 dir remains | `Start-Process -Wait`, then `uninstall.exe /S` |
+| `npm ci` on the committed lockfile | clean install; `svelte-check` still 0/0; `npm run build` unchanged | local |
 | Uninstall leftovers | `%LOCALAPPDATA%\dev.bramburn.androidpanel` (WebView2 user-data dir) **remains** | known WebView2 behaviour; NSIS does not remove it — follow-up §9.5 |
 | `adb version` starts the daemon? | **no** — tcp:5037 is closed before *and* after (`kill-server`, then `adb version`) | `Test-NetConnection` on 127.0.0.1:5037. This is why the setup probe is safe to run unprompted |
 | Guide shown when adb is absent | **yes** — with `LOCALAPPDATA` redirected to an empty folder: SDK row ✗, `Choose SDK folder…` + `Open platform-tools docs` offered, `Continue to devices` disabled — `docs/windows-port/img/shot-setup.png` | release exe, env override |
